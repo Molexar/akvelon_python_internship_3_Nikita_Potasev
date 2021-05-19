@@ -1,0 +1,2 @@
+# akvelon_python_internship_3_yourFirstName_yourLastName
+Tasks for python intern in Akvelon
