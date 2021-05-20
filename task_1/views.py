@@ -57,15 +57,31 @@ class UserTransactions(views.APIView):
 
 class UserTransactionByDay(views.APIView):
     """Endpoint that allows view transactions of user by a day with argument for sorting
-        getting: user_id, date, order_by parameters
+        getting: user_id, date, date_start, date_end, is income/outcome, order_by parameters
     """
     # TODO: filter by income/outcome
     def post(self, request):
-        date = request.data.get('date')
         user_id = request.data.get('user')
+
+        date = request.data.get('date')
+        date_start, date_end = request.data.get('date_start'), request.data.get('date_end')
+
         order = request.data.get('order_by')
-        transactions = Transaction.objects.filter(Q(date=date) & Q(user=user_id))
-        if order != "":
+
+        is_income = request.data.get('income')
+        is_outcome = request.data.get('outcome')
+
+        transactions = Transaction.objects.filter(user=user_id)
+
+        if date:
+            transactions = transactions.filter(date=date)
+        elif date_start and date_end:
+            transactions = transactions.filter(date__range=[date_start, date_end])
+        if is_income:
+            transactions.filter(amount__gt=0)
+        elif is_outcome:
+            transactions.filter(amount__lt=0)
+        if order:
             transactions.order_by(order)
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)

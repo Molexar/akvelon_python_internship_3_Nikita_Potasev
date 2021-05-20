@@ -16,7 +16,7 @@ urlpatterns = [
     path('api/transactions/', views.TransactionList.as_view()),
     # Endpoint that allows to view all user's payments without filtering
     path('api/payments/<int:pk>/', views.UserTransactions.as_view()),
-    # Endpoint that allows view transactions of user by a day with argument for sorting
+    # Endpoint that allows view transactions of user by a day or range with argument for sorting
     path('api/payments/', views.UserTransactionByDay.as_view()),
 
 ]
