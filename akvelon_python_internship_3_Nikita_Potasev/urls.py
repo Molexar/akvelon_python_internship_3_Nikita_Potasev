@@ -15,8 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from .yasg import urlpatterns as doc_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),  # Standard admin urls of django app
     path('task_1/', include('task_1.urls'))  # Including urls for rest api from app task_1
 ]
+
+urlpatterns += doc_urls

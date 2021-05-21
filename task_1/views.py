@@ -13,7 +13,7 @@ class TransactionList(views.APIView):
         transactions = Transaction.objects.all()
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)
-
+    """Create new Transaction"""
     def post(self, request):
         transaction = TransactionCreateSerializer(data=request.data)
         if transaction.is_valid():
