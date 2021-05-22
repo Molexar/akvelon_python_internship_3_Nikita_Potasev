@@ -1,20 +1,42 @@
 from django.contrib.auth.models import User
 from django.db.models import Q
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, permissions, views
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Transaction
 from task_1.serializers import TransactionSerializer, UserListSerializer, TransactionCreateSerializer
 
 
+class TransactionDetail(views.APIView):
+    def get(self, request, pk):
+        """Get detail transaction"""
+        transaction = Transaction.objects.get(pk=pk)
+        serializer = TransactionSerializer(transaction)
+        return Response(serializer.data)
+
+
 class TransactionList(views.APIView):
-    """Endpoint that works with CRUD queries for Transaction model"""
     def get(self, request):
+        """Get all transactions"""
         transactions = Transaction.objects.all()
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)
-    """Create new Transaction"""
+
+    @swagger_auto_schema(method='post', request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'amount': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'date': openapi.Schema(type=openapi.FORMAT_DATE)
+        }
+    ))
+    @api_view(['POST'])
     def post(self, request):
+        # Create new transaction
+        """Create new transaction"""
         transaction = TransactionCreateSerializer(data=request.data)
         if transaction.is_valid():
             transaction.save()
@@ -46,8 +68,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class UserTransactions(views.APIView):
-    """Endpoint that allows to view all user's payments without filtering
-        getting: user_id parameter
+    """
+    Endpoint that allows to view all user's payments without filtering
     """
     def get(self, request, pk):
         transactions = Transaction.objects.filter(user=pk)
@@ -56,10 +78,21 @@ class UserTransactions(views.APIView):
 
 
 class UserTransactionByDay(views.APIView):
-    """Endpoint that allows view transactions of user by a day with argument for sorting
-        getting: user_id, date, date_start, date_end, is income/outcome, order_by parameters
     """
-    # TODO: filter by income/outcome
+    Filtering transactions by user, date(or range), type of transaction and order
+    """
+    @swagger_auto_schema(method='post', request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'date': openapi.Schema(type=openapi.FORMAT_DATE),
+            'date_start': openapi.Schema(type=openapi.FORMAT_DATE),
+            'date_end': openapi.Schema(type=openapi.FORMAT_DATE),
+            'type': openapi.Schema(type=openapi.TYPE_STRING, description='income/outcome'),
+            'order_by': openapi.Schema(type=openapi.TYPE_STRING, description='- if need reversed'),
+        }
+    ))
+    @api_view(['POST'])
     def post(self, request):
         user_id = request.data.get('user')
 
@@ -68,18 +101,20 @@ class UserTransactionByDay(views.APIView):
 
         order = request.data.get('order_by')
 
-        is_income = request.data.get('income')
-        is_outcome = request.data.get('outcome')
+        type = request.data.get('type')
 
-        transactions = Transaction.objects.filter(user=user_id)
+        if user_id:
+            transactions = Transaction.objects.filter(user=user_id)
+        else:
+            transactions = Transaction.objects.all()
 
         if date:
             transactions = transactions.filter(date=date)
         elif date_start and date_end:
             transactions = transactions.filter(date__range=[date_start, date_end])
-        if is_income:
+        if type == 'income':
             transactions.filter(amount__gt=0)
-        elif is_outcome:
+        elif type == 'outcome':
             transactions.filter(amount__lt=0)
         if order:
             transactions.order_by(order)

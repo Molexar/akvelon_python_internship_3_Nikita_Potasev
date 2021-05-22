@@ -14,6 +14,8 @@ router.register('api/users', views.UserViewSet, 'users')
 urlpatterns = [
     # Endpoint that works with CRUD queries for Transaction model
     path('api/transactions/', views.TransactionList.as_view()),
+    # Endpoint transaction detail
+    path('api/transactions/<int:pk>/', views.TransactionDetail.as_view()),
     # Endpoint that allows to view all user's payments without filtering
     path('api/payments/<int:pk>/', views.UserTransactions.as_view()),
     # Endpoint that allows view transactions of user by a day or range with argument for sorting
